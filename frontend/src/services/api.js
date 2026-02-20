@@ -1,0 +1,220 @@
+import { supabase } from '../lib/supabase';
+
+// Categories
+export const getCategories = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('created_at', { ascending: true });
+    
+    if (error) throw error;
+    
+    // Mapper les colonnes si nécessaire
+    return (data || []).map(cat => ({
+      ...cat,
+      image: cat.image_url || cat.image || '',
+    }));
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+};
+
+export const getCategoryById = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return {
+      ...data,
+      image: data.image_url || data.image || '',
+    };
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    return null;
+  }
+};
+
+// Products
+export const getProducts = async (filters = {}) => {
+  try {
+    let query = supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (filters.category) {
+      query = query.eq('category', filters.category);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    
+    // Mapper les colonnes d'images
+    let results = (data || []).map(product => ({
+      ...product,
+      image: product.image_url || product.image || '',
+    }));
+    
+    // Filtrer featured côté client si nécessaire
+    if (filters.featured !== undefined) {
+      results = results.filter(p => p.featured === filters.featured);
+    }
+    
+    return results;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+};
+
+export const getProductById = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return {
+      ...data,
+      image: data.image_url || data.image || '',
+    };
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+};
+
+export const searchProducts = async (searchTerm) => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .ilike('name', `%${searchTerm}%`)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    return (data || []).map(product => ({
+      ...product,
+      image: product.image_url || product.image || '',
+    }));
+  } catch (error) {
+    console.error('Error searching products:', error);
+    return [];
+  }
+};
+
+// Orders
+export const createOrder = async (orderData) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert([orderData])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    throw error;
+  }
+};
+
+// Contact Messages
+export const createContactMessage = async (messageData) => {
+  try {
+    // Essayer d'abord avec 'contact_messages'
+    let { data, error } = await supabase
+      .from('contact_messages')
+      .insert([messageData])
+      .select()
+      .single();
+    
+    // Si erreur, essayer avec 'contacts'
+    if (error) {
+      const result = await supabase
+        .from('contacts')
+        .insert([messageData])
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    }
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating contact message:', error);
+    // En dernier recours, sauvegarder en localStorage
+    const localMessages = JSON.parse(localStorage.getItem('pending_messages') || '[]');
+    const newMessage = {
+      id: Date.now().toString(),
+      ...messageData,
+      created_at: new Date().toISOString()
+    };
+    localMessages.push(newMessage);
+    localStorage.setItem('pending_messages', JSON.stringify(localMessages));
+    return newMessage;
+  }
+};
+
+// Get all contact messages (for admin)
+export const getContactMessages = async () => {
+  try {
+    // Essayer d'abord avec 'contact_messages'
+    let { data, error } = await supabase
+      .from('contact_messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    // Si erreur, essayer avec 'contacts'
+    if (error) {
+      const result = await supabase
+        .from('contacts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      data = result.data;
+      error = result.error;
+    }
+    
+    // Si toujours une erreur, charger depuis localStorage
+    if (error) {
+      const localMessages = JSON.parse(localStorage.getItem('pending_messages') || '[]');
+      return localMessages;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching contact messages:', error);
+    const localMessages = JSON.parse(localStorage.getItem('pending_messages') || '[]');
+    return localMessages;
+  }
+};
+
+// Update contact message status
+export const updateMessageStatus = async (id, status) => {
+  try {
+    const { data, error } = await supabase
+      .from('contact_messages')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating message status:', error);
+    throw error;
+  }
+};
