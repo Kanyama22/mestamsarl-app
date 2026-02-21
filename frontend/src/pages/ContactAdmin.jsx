@@ -6,7 +6,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Input } from '../components/ui/input';
 import { ArrowLeft, Send, Phone, Mail } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { createContactMessage } from '../services/api';
+import { createContactMessage, getContactMessages } from '../services/api';
 import { companyInfo } from '../mock';
 
 const ContactAdmin = () => {
@@ -135,15 +135,25 @@ const ContactAdmin = () => {
         </Card>
       </div>
 
-      {/* Horaires */}
-      <div className="px-4 mt-6">
-        <Card className="bg-gray-50 p-4 border border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Horaires de réponse</h3>
-          <p className="text-sm text-gray-600">Lun - Ven : 8h - 18h</p>
-          <p className="text-sm text-gray-600">Sam : 9h - 14h</p>
-          <p className="text-sm text-gray-600">Dim : Fermé</p>
-        </Card>
+      {/* Fixed bottom input */}
+      <div className="fixed left-0 right-0 bottom-0 bg-white border-t border-gray-200 p-4">
+        <div className="max-w-7xl mx-auto flex items-center gap-3">
+          <input type="text" placeholder="Votre nom (optionnel)" value={name} onChange={(e) => setName(e.target.value)} className="hidden md:block w-48 border rounded px-3 py-2" />
+          <input type="email" placeholder="Votre email (optionnel)" value={email} onChange={(e) => setEmail(e.target.value)} className="hidden md:block w-56 border rounded px-3 py-2" />
+          <div className="flex-1">
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={2} className="w-full border rounded px-3 py-2 resize-none" placeholder="Écrire un message..."></textarea>
+            {file && <div className="mt-2 text-sm">Pièce jointe: {file.name} <button onClick={() => setFile(null)} className="ml-2 text-red-500">Supprimer</button></div>}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="cursor-pointer inline-flex items-center px-3 py-2 border rounded">
+              <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V7.414A2 2 0 0016.586 6L13 2.414A2 2 0 0011.586 2H4z" /></svg>
+            </label>
+            <Button onClick={handleSend} className="bg-blue-600 hover:bg-blue-700">Envoyer</Button>
+          </div>
+        </div>
       </div>
+
     </div>
   );
 };
