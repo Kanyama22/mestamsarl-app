@@ -3,9 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { ShoppingCart, ArrowLeft, Package, Shield, Truck } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Package, Shield, Truck, Star } from 'lucide-react';
 import { categories, testimonials } from '../mock';
 import { getProductById, getProductReviews } from '../services/api';
+import { createOrder } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 
 const ProductDetail = () => {
@@ -82,6 +83,30 @@ const ProductDetail = () => {
     });
   };
 
+  const handleBuyNow = async () => {
+    try {
+      const orderData = {
+        product_id: product.id,
+        product_name: product.name,
+        quantity,
+        price: product.price ?? product.price_usd ?? product.price_cdf ?? 0,
+        total: (product.price ?? product.price_usd ?? product.price_cdf ?? 0) * quantity,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+      const order = await createOrder(orderData);
+      if (order && order.id) {
+        // redirect to checkout page
+        window.location.href = `/checkout/${order.id}`;
+      } else {
+        throw new Error('Order creation failed');
+      }
+    } catch (err) {
+      console.error('Buy now error', err);
+      toast({ title: 'Erreur', description: 'Impossible de créer la commande', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
@@ -132,21 +157,21 @@ const ProductDetail = () => {
               <p className="text-5xl font-bold text-blue-600 mb-6">${product.price ?? product.price_usd ?? product.price_cdf ?? '—'}</p>
             </div>
 
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold mb-3 text-gray-900">Description</h3>
-              <p className="text-gray-600 leading-relaxed text-lg">{product.long_description || product.short_description || product.description}</p>
+            <div className="mb-8 pb-8 border-b border-gray-100">
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">À propos de ce produit</h3>
+              <p className="text-gray-600 leading-relaxed text-base">{product.long_description || product.short_description || product.description}</p>
             </div>
 
             {/* Specifications */}
             {parseSpecifications(product.specifications) && (
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4 text-gray-900">Spécifications</h3>
+              <div className="mb-8 pb-8 border-b border-gray-100">
+                <h3 className="text-xl font-semibold mb-4 text-gray-900">Spécifications techniques</h3>
                 <Card>
                   <CardContent className="p-6">
                     <div className="grid grid-cols-1 gap-3">
                       {Object.entries(parseSpecifications(product.specifications)).map(([key, value]) => (
-                        <div key={key} className="flex justify-between border-b border-gray-100 pb-3 last:border-0">
-                          <span className="text-gray-600 capitalize">{key}:</span>
+                        <div key={key} className="flex justify-between py-3 border-b border-gray-100 last:border-0">
+                          <span className="text-gray-600 capitalize font-medium">{key}:</span>
                           <span className="font-semibold text-gray-900">{String(value)}</span>
                         </div>
                       ))}
@@ -255,23 +280,46 @@ const ProductDetail = () => {
         )}
 
         {/* Reviews */}
-        <div className="mt-16">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900">Avis & commentaires</h2>
-          {reviews.length === 0 && <p className="text-gray-600">Aucun avis pour ce produit.</p>}
-          <div className="space-y-4">
-            {reviews.map((r, idx) => (
-              <Card key={r.id || idx} className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="font-semibold">{r.name || r.user_name || 'Anonyme'}</div>
-                    <div className="text-sm text-gray-500">{new Date(r.created_at || r.date || Date.now()).toLocaleDateString('fr-FR')}</div>
+        <div className="mt-16 bg-white rounded-2xl p-8 shadow-sm">
+          <h2 className="text-3xl font-bold mb-8 text-gray-900">Avis et commentaires</h2>
+          {reviews.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Aucun avis pour ce produit pour le moment.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {reviews.map((r, idx) => (
+                <div key={r.id || idx} className="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-base">{r.name || r.user_name || 'Client anonyme'}</h4>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {new Date(r.created_at || r.date || Date.now()).toLocaleDateString('fr-FR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                    {r.rating || r.stars ? (
+                      <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-lg">
+                        <div className="flex items-center gap-0.5">
+                          {[...Array(Math.min(5, Math.round(r.rating || r.stars || 0)))].map((_, i) => (
+                            <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />
+                          ))}
+                          {[...Array(5 - Math.round(r.rating || r.stars || 0))].map((_, i) => (
+                            <Star key={`empty-${i}`} size={16} className="text-gray-300" />
+                          ))}
+                        </div>
+                        <span className="font-bold text-gray-700 ml-1">{r.rating || r.stars || 0}/5</span>
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="text-yellow-500 font-bold">{r.rating ?? r.stars ?? ''}</div>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{r.comment || r.message || r.body}</p>
                 </div>
-                <div className="mt-3 text-gray-700 whitespace-pre-wrap">{r.comment || r.message || r.body}</div>
-              </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

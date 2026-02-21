@@ -106,40 +106,10 @@ const ContactAdmin = () => {
         </Card>
       </div>
 
-      {/* Contact direct */}
-      <div className="px-4 mt-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Contact Direct</h3>
-        
-        <Card className="mb-3 border border-gray-200">
-          <a href={`tel:${companyInfo.phone}`} className="flex items-center gap-4 p-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Phone className="text-blue-600" size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Appeler</p>
-              <p className="text-sm text-gray-600">{companyInfo.phone}</p>
-            </div>
-          </a>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <a href={`mailto:${companyInfo.email}`} className="flex items-center gap-4 p-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Mail className="text-blue-600" size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Email</p>
-              <p className="text-sm text-gray-600">{companyInfo.email}</p>
-            </div>
-          </a>
-        </Card>
-      </div>
 
       {/* Fixed bottom input */}
       <div className="fixed left-0 right-0 bottom-0 bg-white border-t border-gray-200 p-4">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
-          <input type="text" placeholder="Votre nom (optionnel)" value={name} onChange={(e) => setName(e.target.value)} className="hidden md:block w-48 border rounded px-3 py-2" />
-          <input type="email" placeholder="Votre email (optionnel)" value={email} onChange={(e) => setEmail(e.target.value)} className="hidden md:block w-56 border rounded px-3 py-2" />
           <div className="flex-1">
             <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={2} className="w-full border rounded px-3 py-2 resize-none" placeholder="Écrire un message..."></textarea>
             {file && <div className="mt-2 text-sm">Pièce jointe: {file.name} <button onClick={() => setFile(null)} className="ml-2 text-red-500">Supprimer</button></div>}
