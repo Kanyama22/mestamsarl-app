@@ -5,8 +5,7 @@ import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { ArrowLeft, Mail, Lock, User } from 'lucide-react';
-import { signUp } from '../services/auth';
-import { signInWithMagicLink } from '../services/auth';
+import { signUp, signIn } from '../services/auth';
 import { useToast } from '../hooks/use-toast';
 
 const Register = () => {
@@ -48,14 +47,20 @@ const Register = () => {
       await signUp(formData.email, formData.password, {
         name: formData.name
       });
-      
-      toast({
-        title: "Compte créé ✓",
-        description: "Vérifiez votre email pour confirmer votre compte",
-        duration: 5000,
-      });
-      
-      navigate('/login');
+      // Try to sign in immediately after sign up so user can use the app without waiting for email confirmation
+      try {
+        await signIn(formData.email, formData.password);
+        toast({ title: 'Connexion automatique', description: 'Vous êtes connecté.', duration: 3000 });
+        navigate('/');
+      } catch (signinErr) {
+        // If automatic sign-in fails, fall back to asking user to check their email
+        toast({
+          title: "Compte créé ✓",
+          description: "Votre compte a été créé. Si vous ne pouvez pas vous connecter immédiatement, vérifiez votre email pour confirmer le compte.",
+          duration: 6000,
+        });
+        navigate('/login');
+      }
     } catch (error) {
       toast({
         title: "Erreur",
@@ -63,15 +68,7 @@ const Register = () => {
         variant: "destructive",
         duration: 3000,
       });
-      // offer to send a magic link in case email confirmation failed
-      if (error?.message) {
-        // show action to resend magic link
-        toast({
-          title: 'Problème confirmation',
-          description: 'Souhaitez-vous recevoir un lien de connexion par email ?',
-          duration: 8000,
-        });
-      }
+      // show generic error
     } finally {
       setLoading(false);
     }
