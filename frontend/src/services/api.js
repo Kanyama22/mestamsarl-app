@@ -1,5 +1,28 @@
 import { supabase } from '../lib/supabase';
 
+// Try common buckets when resolving storage paths
+const STORAGE_BUCKETS = ['images', 'public', 'uploads'];
+
+async function resolveImageUrl(pathOrUrl) {
+  if (!pathOrUrl) return '/placeholder.svg';
+  if (pathOrUrl.startsWith('http')) return pathOrUrl;
+
+  // Try each common bucket to find a public URL
+  for (const bucket of STORAGE_BUCKETS) {
+    try {
+      // getPublicUrl returns: { data: { publicUrl } } in newer SDKs
+      const res = supabase.storage.from(bucket).getPublicUrl(pathOrUrl);
+      const publicUrl = res?.data?.publicUrl || res?.publicURL || res?.data?.publicURL;
+      if (publicUrl && publicUrl.indexOf('null') === -1) return publicUrl;
+    } catch (err) {
+      // ignore and try next bucket
+    }
+  }
+
+  // Last resort: return placeholder
+  return '/placeholder.svg';
+}
+
 // Categories
 export const getCategories = async () => {
   try {
@@ -10,11 +33,11 @@ export const getCategories = async () => {
     
     if (error) throw error;
     
-    // Mapper les colonnes si nécessaire
-    return (data || []).map(cat => ({
+    // Mapper les colonnes si nécessaire et résoudre les URLs d'images
+    return await Promise.all((data || []).map(async cat => ({
       ...cat,
-      image: cat.image_url || cat.image || '',
-    }));
+      image: await resolveImageUrl(cat.image_url || cat.image || ''),
+    })));
   } catch (error) {
     console.error('Error fetching categories:', error);
     return [];
@@ -32,7 +55,7 @@ export const getCategoryById = async (id) => {
     if (error) throw error;
     return {
       ...data,
-      image: data.image_url || data.image || '',
+      image: await resolveImageUrl(data.image_url || data.image || ''),
     };
   } catch (error) {
     console.error('Error fetching category:', error);
@@ -56,11 +79,11 @@ export const getProducts = async (filters = {}) => {
     
     if (error) throw error;
     
-    // Mapper les colonnes d'images
-    let results = (data || []).map(product => ({
+    // Mapper les colonnes d'images et résoudre les URLs de stockage
+    const results = await Promise.all((data || []).map(async product => ({
       ...product,
-      image: product.image_url || product.image || '',
-    }));
+      image: await resolveImageUrl(product.image_url || product.image || ''),
+    })));
     
     // Filtrer featured côté client si nécessaire
     if (filters.featured !== undefined) {
@@ -85,7 +108,7 @@ export const getProductById = async (id) => {
     if (error) throw error;
     return {
       ...data,
-      image: data.image_url || data.image || '',
+      image: await resolveImageUrl(data.image_url || data.image || ''),
     };
   } catch (error) {
     console.error('Error fetching product:', error);
@@ -103,10 +126,10 @@ export const searchProducts = async (searchTerm) => {
     
     if (error) throw error;
     
-    return (data || []).map(product => ({
+    return await Promise.all((data || []).map(async product => ({
       ...product,
-      image: product.image_url || product.image || '',
-    }));
+      image: await resolveImageUrl(product.image_url || product.image || ''),
+    })));
   } catch (error) {
     console.error('Error searching products:', error);
     return [];
