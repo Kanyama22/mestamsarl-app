@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { ArrowLeft, Heart, Share2, ShoppingCart, Star } from 'lucide-react';
-import { getProductById } from '../services/api';
+import { getProductById, createOrder } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 
 const ProductDetailMobile = () => {
@@ -53,6 +53,31 @@ const ProductDetailMobile = () => {
       </div>
     );
   }
+
+  const parseSpecifications = (specs) => {
+    if (!specs) return null;
+    if (typeof specs === 'object') return specs;
+    try { return JSON.parse(specs); } catch (e) { return null; }
+  };
+
+  const handleBuyNow = async () => {
+    try {
+      const orderData = {
+        product_id: product.id,
+        product_name: product.name,
+        quantity,
+        price: product.price ?? product.price_usd ?? product.price_cdf ?? 0,
+        total: (product.price ?? product.price_usd ?? product.price_cdf ?? 0) * quantity,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+      const order = await createOrder(orderData);
+      if (order && order.id) window.location.href = `/checkout/${order.id}`;
+    } catch (err) {
+      console.error('Buy now mobile error', err);
+      toast({ title: 'Erreur', description: 'Impossible de créer la commande', variant: 'destructive' });
+    }
+  };
 
   const handleAddToCart = () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -110,10 +135,10 @@ const ProductDetailMobile = () => {
       <div className="px-4 -mt-6">
         <Card className="rounded-3xl shadow-xl p-6 bg-white">
           {/* Prix et titre */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h1 className="text-2xl font-bold text-gray-900 flex-1 mr-4">{product.name}</h1>
-              {product.featured && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2 text-gray-900">Description</h3>
+            <p className="text-gray-600 leading-relaxed">{product.long_description || product.short_description || product.description}</p>
+          </div>
                 <Badge className="bg-orange-500">Populaire</Badge>
               )}
             </div>
@@ -134,11 +159,11 @@ const ProductDetailMobile = () => {
           </div>
 
           {/* Spécifications */}
-          {product.specifications && (
+          {parseSpecifications(product.specifications) && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3 text-gray-900">Spécifications</h3>
               <div className="space-y-2">
-                {Object.entries(product.specifications).map(([key, value]) => (
+                {Object.entries(parseSpecifications(product.specifications)).map(([key, value]) => (
                   <div key={key} className="flex justify-between py-2 border-b border-gray-100">
                     <span className="text-gray-600 capitalize">{key}:</span>
                     <span className="font-semibold text-gray-900">{value}</span>
@@ -170,14 +195,21 @@ const ProductDetailMobile = () => {
             </button>
           </div>
           
-          {/* Bouton ajouter au panier */}
-          <Button 
-            className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 rounded-full text-base font-semibold"
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart size={20} className="mr-2" />
-            Ajouter au panier
-          </Button>
+          <div className="flex-1 flex gap-2">
+            <Button 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 rounded-full text-base font-semibold"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart size={20} className="mr-2" />
+              Ajouter
+            </Button>
+            <Button 
+              className="w-36 bg-green-600 hover:bg-green-700 h-12 rounded-full text-base font-semibold"
+              onClick={handleBuyNow}
+            >
+              Acheter
+            </Button>
+          </div>
         </div>
       </div>
     </div>

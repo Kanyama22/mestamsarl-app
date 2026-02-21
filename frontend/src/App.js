@@ -8,6 +8,7 @@ import ProductDetailMobile from "./pages/ProductDetailMobile";
 import CartMobile from "./pages/CartMobile";
 import ProfileMobile from "./pages/ProfileMobile";
 import ContactAdmin from "./pages/ContactAdmin";
+import Checkout from "./pages/Checkout";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -30,6 +31,7 @@ function App() {
               <Route path="shop" element={<ShopMobile />} />
               <Route path="product/:id" element={<ProductDetailMobile />} />
               <Route path="cart" element={<CartMobile />} />
+              <Route path="checkout/:id" element={<Checkout />} />
               <Route path="profile" element={<ProfileMobile />} />
               <Route path="contact-admin" element={<ContactAdmin />} />
               <Route path="notifications" element={<Notifications />} />

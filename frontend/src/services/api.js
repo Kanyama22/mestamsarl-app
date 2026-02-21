@@ -180,6 +180,37 @@ export const createOrder = async (orderData) => {
   }
 };
 
+export const getOrderById = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('Error fetching order:', err);
+    return null;
+  }
+};
+
+export const updateOrderStatus = async (id, status) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('Error updating order status:', err);
+    throw err;
+  }
+};
+
 // Contact Messages
 export const createContactMessage = async (messageData) => {
   try {
