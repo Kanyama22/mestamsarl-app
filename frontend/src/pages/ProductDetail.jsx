@@ -14,18 +14,19 @@ const ProductDetail = () => {
   const { toast } = useToast();
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
-
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const load = async () => {
       const p = await getProductById(id);
       setProduct(p);
       const revs = await getProductReviews(id);
       setReviews(revs && revs.length ? revs : (testimonials || []));
+      setLoading(false);
     };
     load();
   }, [id]);
 
-  const [reviews, setReviews] = useState([]);
 
   const parseSpecifications = (specs) => {
     if (!specs) return null;
@@ -36,6 +37,17 @@ const ProductDetail = () => {
       return null;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement du produit...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
