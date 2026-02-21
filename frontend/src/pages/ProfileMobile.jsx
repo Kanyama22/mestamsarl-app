@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { User, MapPin, Phone, Mail, ShoppingBag, Settings, HelpCircle, ChevronRight, LogOut, LogIn } from 'lucide-react';
-import { companyInfo } from '../mock';
+// companyInfo removed from profile display
 import { useAuth } from '../contexts/AuthContext';
 import { signOut } from '../services/auth';
 import { useToast } from '../hooks/use-toast';
@@ -130,41 +130,7 @@ const ProfileMobile = () => {
         </div>
       )}
 
-      {/* Contact */}
-      <div className="px-4 mt-8">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Contact</h3>
-        <Card className="bg-white border border-gray-200 p-4">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Phone size={18} className="text-blue-600" />
-              <span className="text-gray-700">{companyInfo.phone}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Mail size={18} className="text-blue-600" />
-              <span className="text-gray-700">{companyInfo.email}</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <MapPin size={18} className="text-blue-600 mt-1" />
-              <div className="text-gray-700 text-sm">
-                <p>{companyInfo.address}</p>
-                <p className="text-gray-500 mt-1">Villes: {companyInfo.cities.join(', ')}</p>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Informations légales */}
-      <div className="px-4 mt-6 mb-6">
-        <Card className="bg-white border border-gray-200 p-4">
-          <h3 className="font-semibold text-gray-900 mb-2">{companyInfo.name}</h3>
-          <div className="space-y-1 text-xs text-gray-600">
-            <p>RCCM: {companyInfo.rccm}</p>
-            <p>ID NAT: {companyInfo.idNat}</p>
-            <p>N° IMPÔT: {companyInfo.nImpot}</p>
-          </div>
-        </Card>
-      </div>
+      {/* (Contact and legal information removed) */}
     </div>
   );
 };

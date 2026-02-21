@@ -7,7 +7,7 @@ const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           {/* Company Info */}
           <div>
             <h3 className="text-2xl font-bold mb-4 text-blue-400">{companyInfo.name}</h3>
@@ -15,11 +15,7 @@ const Footer = () => {
               Importation de produits de qualité depuis la Chine vers la RDC.
               Prix usine, inspection rigoureuse et livraison sécurisée.
             </p>
-            <div className="space-y-2 text-sm text-gray-400">
-              <p>RCCM: {companyInfo.rccm}</p>
-              <p>ID NAT: {companyInfo.idNat}</p>
-              <p>N° IMPÔT: {companyInfo.nImpot}</p>
-            </div>
+            
           </div>
 
           {/* Quick Links */}
@@ -49,27 +45,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact */}
-          <div>
-            <h4 className="text-xl font-semibold mb-4">Contact</h4>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <Mail size={20} className="text-blue-400 mt-1" />
-                <span className="text-gray-400">{companyInfo.email}</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Phone size={20} className="text-blue-400 mt-1" />
-                <span className="text-gray-400">{companyInfo.phone}</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <MapPin size={20} className="text-blue-400 mt-1" />
-                <div className="text-gray-400">
-                  <p>{companyInfo.address}</p>
-                  <p className="mt-1">Villes: {companyInfo.cities.join(', ')}</p>
-                </div>
-              </li>
-            </ul>
-          </div>
+          
         </div>
 
         <div className="border-t border-gray-800 pt-8 text-center text-gray-400">

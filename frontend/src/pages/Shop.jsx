@@ -65,9 +65,10 @@ const Shop = () => {
             <Link key={product.id} to={`/product/${product.id}`}>
               <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
                 <div className="relative h-56 overflow-hidden">
-                  <img 
-                    src={product.image} 
+                  <img
+                    src={product.image || '/placeholder.svg'}
                     alt={product.name}
+                    onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
                     className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                   />
                   {product.featured && (

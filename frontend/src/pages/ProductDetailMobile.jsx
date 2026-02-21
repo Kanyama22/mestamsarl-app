@@ -77,11 +77,12 @@ const ProductDetailMobile = () => {
     <div className="pb-32 bg-white">
       {/* Header avec image */}
       <div className="relative">
-        <img 
-          src={product.image} 
-          alt={product.name}
-          className="w-full h-96 object-cover"
-        />
+          <img
+            src={product.image || '/placeholder.svg'}
+            alt={product.name}
+            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+            className="w-full h-96 object-cover"
+          />
         
         {/* Boutons superposés */}
         <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">

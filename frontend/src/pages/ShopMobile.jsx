@@ -113,11 +113,12 @@ const ShopMobile = () => {
                   <img 
                     src={product.image} 
                     alt={product.name}
-                    className="w-full h-40 object-cover"
-                  />
-                  {product.featured && (
-                    <div className="absolute top-2 left-2">
-                      <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded font-semibold">
+                      <img
+                        src={product.image || '/placeholder.svg'}
+                        alt={product.name}
+                        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                        className="w-full h-40 object-cover rounded-md"
+                      />
                         Populaire
                       </span>
                     </div>
