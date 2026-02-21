@@ -2,13 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Trash2, ShoppingBag, ArrowLeft, Loader } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
+import { useAuth } from '../contexts/AuthContext';
+import { createOrder, createContactMessage } from '../services/api';
 
 const Cart = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.email?.split('@')[0] || '',
+    email: user?.email || '',
+    phone: '',
+    address: '',
+    city: '',
+    zip: '',
+  });
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -35,16 +50,86 @@ const Cart = () => {
     });
   };
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalPrice = cartItems.reduce((sum, item) => sum + ((item.price ?? item.price_usd ?? item.price_cdf ?? 0) * item.quantity), 0);
 
-  const handleCheckout = () => {
-    toast({
-      title: "Commande enregistrée",
-      description: "Votre commande a été enregistrée avec succès. Nous vous contactons bientôt.",
-      duration: 5000,
-    });
-    localStorage.setItem('cart', '[]');
-    setCartItems([]);
+  const handleCheckout = async () => {
+    if (!formData.name || !formData.email || !formData.phone || !formData.address) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez remplir tous les champs',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Créer une commande pour chaque produit ou une commande unique avec tous les items
+      const orderData = {
+        user_id: user?.id || null,
+        items: cartItems.map(item => ({
+          product_id: item.id,
+          product_name: item.name,
+          quantity: item.quantity,
+          price: item.price ?? item.price_usd ?? item.price_cdf ?? 0,
+        })),
+        total: totalPrice,
+        status: 'pending',
+        payment_status: 'pending',
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        customer_address: formData.address,
+        customer_city: formData.city,
+        customer_zip: formData.zip,
+        created_at: new Date().toISOString(),
+      };
+
+      const order = await createOrder(orderData);
+
+      if (order && order.id) {
+        toast({
+          title: 'Commande créée ✓',
+          description: 'Redirection vers paiement...',
+          duration: 2000,
+        });
+
+        // Notify admin about the new order and request discussion about delivery fees
+        try {
+          const contactPayload = {
+            name: formData.name || (user?.email?.split('@')[0] || 'Client'),
+            email: formData.email || user?.email || '',
+            message: `Nouvelle commande créée (ID: ${order.id}).\nMontant: $${order.total}.\nJe souhaite discuter des frais de livraison pour cette commande.`,
+            status: 'new',
+            order_id: order.id,
+            created_at: new Date().toISOString(),
+          };
+          await createContactMessage(contactPayload);
+        } catch (err) {
+          console.error('Failed to notify admin about order:', err);
+        }
+
+        setTimeout(() => {
+          localStorage.setItem('cart', '[]');
+          navigate(`/checkout/${order.id}`);
+        }, 500);
+      } else {
+        throw new Error('Échec création commande');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast({
+        title: 'Erreur de commande',
+        description: err.message || 'Impossible de créer votre commande',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFormChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
   };
 
   return (
@@ -145,7 +230,7 @@ const Cart = () => {
                     </div>
                     <div className="flex justify-between text-lg">
                       <span className="text-gray-600">Livraison:</span>
-                      <span className="font-semibold text-gray-900">À calculer</span>
+                      <span className="font-semibold text-gray-900">Gratuit</span>
                     </div>
                     <div className="border-t pt-4">
                       <div className="flex justify-between text-xl">
@@ -154,15 +239,99 @@ const Cart = () => {
                       </div>
                     </div>
                   </div>
-                  <Button 
-                    size="lg" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
-                    onClick={handleCheckout}
-                  >
-                    Passer la commande
-                  </Button>
-                  <p className="text-sm text-gray-500 mt-4 text-center">
-                    Nous vous contacterons pour confirmer votre commande et organiser la livraison.
+                  
+                  {!showCheckoutForm ? (
+                    <Button 
+                      size="lg" 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
+                      onClick={() => setShowCheckoutForm(true)}
+                      disabled={loading}
+                    >
+                      Procéder au paiement
+                    </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-semibold mb-1">Nom complet</Label>
+                        <Input
+                          value={formData.name}
+                          onChange={(e) => handleFormChange('name', e.target.value)}
+                          placeholder="Jean Dupont"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-semibold mb-1">Email</Label>
+                        <Input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => handleFormChange('email', e.target.value)}
+                          placeholder="email@example.com"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-semibold mb-1">Téléphone</Label>
+                        <Input
+                          value={formData.phone}
+                          onChange={(e) => handleFormChange('phone', e.target.value)}
+                          placeholder="+243 123456789"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-semibold mb-1">Adresse</Label>
+                        <Input
+                          value={formData.address}
+                          onChange={(e) => handleFormChange('address', e.target.value)}
+                          placeholder="123 Rue..."
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-sm font-semibold mb-1">Ville</Label>
+                          <Input
+                            value={formData.city}
+                            onChange={(e) => handleFormChange('city', e.target.value)}
+                            placeholder="Kinshasa"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-semibold mb-1">Code postal</Label>
+                          <Input
+                            value={formData.zip}
+                            onChange={(e) => handleFormChange('zip', e.target.value)}
+                            placeholder="12345"
+                          />
+                        </div>
+                      </div>
+
+                      <Button 
+                        size="lg" 
+                        className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+                        onClick={handleCheckout}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader size={20} className="mr-2 animate-spin" />
+                            Traitement...
+                          </>
+                        ) : (
+                          'Aller au paiement'
+                        )}
+                      </Button>
+                      <Button 
+                        size="lg" 
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowCheckoutForm(false)}
+                        disabled={loading}
+                      >
+                        Retour panier
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-gray-500 mt-4 text-center">
+                    Vos données sont sécurisées et stockées de manière confidentielle.
                   </p>
                 </CardContent>
               </Card>
