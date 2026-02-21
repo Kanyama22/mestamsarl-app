@@ -110,15 +110,15 @@ const ShopMobile = () => {
             <Link key={product.id} to={`/product/${product.id}`}>
               <Card className="overflow-hidden border border-gray-200">
                 <div className="relative">
-                  <img 
-                    src={product.image} 
+                  <img
+                    src={product.image || '/placeholder.svg'}
                     alt={product.name}
-                      <img
-                        src={product.image || '/placeholder.svg'}
-                        alt={product.name}
-                        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
-                        className="w-full h-40 object-cover rounded-md"
-                      />
+                    onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                    className="w-full h-40 object-cover rounded-md"
+                  />
+                  {product.featured && (
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded font-semibold">
                         Populaire
                       </span>
                     </div>
