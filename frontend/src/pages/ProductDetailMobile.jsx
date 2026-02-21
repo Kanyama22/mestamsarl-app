@@ -134,11 +134,10 @@ const ProductDetailMobile = () => {
       {/* Contenu */}
       <div className="px-4 -mt-6">
         <Card className="rounded-3xl shadow-xl p-6 bg-white">
-          {/* Prix et titre */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2 text-gray-900">Description</h3>
-            <p className="text-gray-600 leading-relaxed">{product.long_description || product.short_description || product.description}</p>
-          </div>
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h1 className="text-2xl font-bold text-gray-900 flex-1 mr-4">{product.name}</h1>
+              {product.featured && (
                 <Badge className="bg-orange-500">Populaire</Badge>
               )}
             </div>
@@ -152,13 +151,11 @@ const ProductDetailMobile = () => {
             </div>
           </div>
 
-          {/* Description */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-2 text-gray-900">Description</h3>
-            <p className="text-gray-600 leading-relaxed">{product.description}</p>
+            <p className="text-gray-600 leading-relaxed">{product.long_description || product.short_description || product.description}</p>
           </div>
 
-          {/* Spécifications */}
           {parseSpecifications(product.specifications) && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3 text-gray-900">Spécifications</h3>
