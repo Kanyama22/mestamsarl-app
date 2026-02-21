@@ -94,7 +94,7 @@ const ProductDetail = () => {
                 <Badge className="bg-blue-600 mb-2">Produit Vedette</Badge>
               )}
               <h1 className="text-4xl font-bold mb-3 text-gray-900">{product.name}</h1>
-              <p className="text-5xl font-bold text-blue-600 mb-6">${product.price}</p>
+              <p className="text-5xl font-bold text-blue-600 mb-6">${product.price ?? product.price_usd ?? product.price_cdf ?? '—'}</p>
             </div>
 
             <div className="mb-8">
@@ -210,7 +210,7 @@ const ProductDetail = () => {
                     </div>
                     <CardContent className="p-5">
                       <h3 className="text-lg font-semibold mb-2 text-gray-900">{relatedProduct.name}</h3>
-                      <p className="text-2xl font-bold text-blue-600">${relatedProduct.price}</p>
+                      <p className="text-2xl font-bold text-blue-600">${relatedProduct.price ?? relatedProduct.price_usd ?? relatedProduct.price_cdf ?? '—'}</p>
                     </CardContent>
                   </Card>
                 </Link>

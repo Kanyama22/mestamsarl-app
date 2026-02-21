@@ -83,7 +83,7 @@ const Shop = () => {
                   <h3 className="text-lg font-semibold mb-2 text-gray-900 line-clamp-2 h-14">{product.name}</h3>
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-2xl font-bold text-blue-600">${product.price}</p>
+                    <p className="text-2xl font-bold text-blue-600">${product.price ?? product.price_usd ?? product.price_cdf ?? '—'}</p>
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Voir détails</Button>
                   </div>
                 </CardContent>

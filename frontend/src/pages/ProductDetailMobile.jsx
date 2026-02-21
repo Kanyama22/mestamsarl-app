@@ -118,7 +118,7 @@ const ProductDetailMobile = () => {
               )}
             </div>
             <div className="flex items-center gap-4">
-              <p className="text-3xl font-bold text-blue-600">${product.price}</p>
+              <p className="text-3xl font-bold text-blue-600">${product.price ?? product.price_usd ?? product.price_cdf ?? '—'}</p>
               <div className="flex items-center gap-1">
                 <Star size={16} className="text-yellow-400 fill-yellow-400" />
                 <span className="text-sm font-semibold">4.8</span>

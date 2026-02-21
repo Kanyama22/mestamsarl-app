@@ -37,7 +37,7 @@ const AdminProducts = () => {
       setEditingProduct(product);
       setFormData({
         name: product.name,
-        price: product.price.toString(),
+        price: (product.price ?? product.price_usd ?? product.price_cdf ?? 0).toString(),
         category: product.category,
         description: product.description,
         image: product.image,
@@ -262,7 +262,7 @@ const AdminProducts = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-700">{category?.name}</td>
-                      <td className="px-6 py-4 font-semibold text-gray-900">${product.price}</td>
+                      <td className="px-6 py-4 font-semibold text-gray-900">${product.price ?? product.price_usd ?? product.price_cdf ?? '—'}</td>
                       <td className="px-6 py-4">
                         {product.featured && (
                           <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-semibold">

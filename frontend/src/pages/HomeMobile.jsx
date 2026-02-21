@@ -140,7 +140,7 @@ const HomeMobile = () => {
                     {product.name}
                   </h3>
                   <div className="flex items-center justify-between">
-                    <p className="text-lg font-bold text-blue-600">${product.price}</p>
+                    <p className="text-lg font-bold text-blue-600">${product.price ?? product.price_usd ?? product.price_cdf ?? '—'}</p>
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 px-3">
                       Voir
                     </Button>
