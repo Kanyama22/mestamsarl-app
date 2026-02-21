@@ -219,15 +219,13 @@ const ProductDetail = () => {
                   <ShoppingCart className="mr-2" size={20} />
                   Ajouter au panier
                 </Button>
-                <Link to="/cart" className="flex-1">
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 text-lg py-6"
-                  >
-                    Voir le panier
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-lg py-6"
+                  onClick={handleBuyNow}
+                >
+                  Acheter maintenant
+                </Button>
               </div>
             </div>
 

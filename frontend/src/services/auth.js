@@ -35,6 +35,18 @@ export const signIn = async (email, password) => {
   }
 };
 
+// Sign in with magic link (OTP) - useful to resend a confirmation/login link
+export const signInWithMagicLink = async (email) => {
+  try {
+    const { data, error } = await supabase.auth.signInWithOtp({ email });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error sending magic link:', error);
+    throw error;
+  }
+};
+
 // Déconnexion
 export const signOut = async () => {
   try {

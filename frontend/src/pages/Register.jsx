@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { ArrowLeft, Mail, Lock, User } from 'lucide-react';
 import { signUp } from '../services/auth';
+import { signInWithMagicLink } from '../services/auth';
 import { useToast } from '../hooks/use-toast';
 
 const Register = () => {
@@ -62,6 +63,27 @@ const Register = () => {
         variant: "destructive",
         duration: 3000,
       });
+      // offer to send a magic link in case email confirmation failed
+      if (error?.message) {
+        // show action to resend magic link
+        toast({
+          title: 'Problème confirmation',
+          description: 'Souhaitez-vous recevoir un lien de connexion par email ?',
+          duration: 8000,
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMagicLink = async () => {
+    try {
+      setLoading(true);
+      await signInWithMagicLink(formData.email);
+      toast({ title: 'Lien envoyé', description: 'Vérifiez votre email pour le lien de connexion.' });
+    } catch (err) {
+      toast({ title: 'Erreur', description: err.message || 'Impossible d envoyer le lien', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -151,6 +173,12 @@ const Register = () => {
               {loading ? 'Création...' : 'Créer mon compte'}
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600 mb-2">Vous avez des problèmes à confirmer votre email ?</p>
+            <Button onClick={handleSendMagicLink} className="bg-yellow-500 hover:bg-yellow-600 text-black">
+              Recevoir un lien de connexion par email
+            </Button>
+          </div>
         </Card>
 
         <div className="text-center mt-6">
