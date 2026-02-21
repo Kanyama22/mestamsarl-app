@@ -79,11 +79,14 @@ export const getProducts = async (filters = {}) => {
     
     if (error) throw error;
     
-    // Mapper les colonnes d'images et résoudre les URLs de stockage
-    const results = await Promise.all((data || []).map(async product => ({
-      ...product,
-      image: await resolveImageUrl(product.image_url || product.image || ''),
-    })));
+    // Mapper les colonnes d'images (priorité à `images[0]`) et résoudre les URLs de stockage
+    const results = await Promise.all((data || []).map(async product => {
+      const firstImage = (product.images && product.images.length) ? product.images[0] : (product.image_url || product.image || '');
+      return {
+        ...product,
+        image: await resolveImageUrl(firstImage),
+      };
+    }));
     
     // Filtrer featured côté client si nécessaire
     if (filters.featured !== undefined) {
@@ -106,9 +109,10 @@ export const getProductById = async (id) => {
       .single();
     
     if (error) throw error;
+    const firstImage = (data.images && data.images.length) ? data.images[0] : (data.image_url || data.image || '');
     return {
       ...data,
-      image: await resolveImageUrl(data.image_url || data.image || ''),
+      image: await resolveImageUrl(firstImage),
     };
   } catch (error) {
     console.error('Error fetching product:', error);
@@ -126,10 +130,13 @@ export const searchProducts = async (searchTerm) => {
     
     if (error) throw error;
     
-    return await Promise.all((data || []).map(async product => ({
-      ...product,
-      image: await resolveImageUrl(product.image_url || product.image || ''),
-    })));
+    return await Promise.all((data || []).map(async product => {
+      const firstImage = (product.images && product.images.length) ? product.images[0] : (product.image_url || product.image || '');
+      return {
+        ...product,
+        image: await resolveImageUrl(firstImage),
+      };
+    }));
   } catch (error) {
     console.error('Error searching products:', error);
     return [];
