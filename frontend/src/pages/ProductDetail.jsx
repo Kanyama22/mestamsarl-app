@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { ShoppingCart, ArrowLeft, Package, Shield, Truck } from 'lucide-react';
-import { products, categories } from '../mock';
+import { categories } from '../mock';
+import { getProductById } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const product = products.find(p => p.id === id);
+  const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    const load = async () => {
+      const p = await getProductById(id);
+      setProduct(p);
+    };
+    load();
+  }, [id]);
 
   if (!product) {
     return (
@@ -25,8 +34,8 @@ const ProductDetail = () => {
     );
   }
 
-  const category = categories.find(c => c.id === product.category);
-  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3);
+  const category = categories.find(c => c.id === product.category_id || c.id === product.category);
+  const relatedProducts = [];
 
   const handleAddToCart = () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -99,7 +108,7 @@ const ProductDetail = () => {
 
             <div className="mb-8">
               <h3 className="text-xl font-semibold mb-3 text-gray-900">Description</h3>
-              <p className="text-gray-600 leading-relaxed text-lg">{product.description}</p>
+              <p className="text-gray-600 leading-relaxed text-lg">{product.long_description || product.short_description || product.description}</p>
             </div>
 
             {/* Specifications */}

@@ -3,7 +3,7 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Mail, MessageSquare, Clock, CheckCircle } from 'lucide-react';
-import { getContactMessages, updateMessageStatus } from '../../services/api';
+import { getContactMessages, updateMessageStatus, createContactMessage } from '../../services/api';
 import { useToast } from '../../hooks/use-toast';
 
 const AdminMessages = () => {
@@ -11,6 +11,8 @@ const AdminMessages = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyFile, setReplyFile] = useState(null);
 
   useEffect(() => {
     loadMessages();
@@ -45,6 +47,36 @@ const AdminMessages = () => {
       });
     }
   };
+
+  const handleReply = async (original) => {
+    if (!replyText.trim() && !replyFile) {
+      toast({ title: 'Erreur', description: 'Le message de réponse est vide', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const payload = {
+        name: 'Admin',
+        email: '',
+        message: replyText,
+        status: 'replied',
+        reply_to: original.id,
+        created_at: new Date().toISOString(),
+      };
+      if (replyFile) payload.file = replyFile;
+
+      await createContactMessage(payload);
+      toast({ title: 'Réponse envoyée', duration: 2000 });
+      setReplyText('');
+      setReplyFile(null);
+      loadMessages();
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Erreur', description: 'Impossible d envoyer la réponse', variant: 'destructive' });
+    }
+  };
+
+  const handleReplyFile = (e) => setReplyFile(e.target.files && e.target.files[0]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -111,7 +143,7 @@ const AdminMessages = () => {
                       <MessageSquare className="text-blue-600" size={24} />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 text-lg">{message.subject}</h3>
+                      <h3 className="font-semibold text-gray-900 text-lg">{message.subject || message.name || message.email || 'Message'}</h3>
                       <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                         <Clock size={14} />
                         <span>{formatDate(message.created_at)}</span>
@@ -123,6 +155,11 @@ const AdminMessages = () => {
 
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                   <p className="text-gray-700 whitespace-pre-wrap">{message.message}</p>
+                  {message.attachment_url && (
+                    <div className="mt-3">
+                      <img src={message.attachment_url} alt="attachment" className="max-w-sm rounded-md" />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -152,7 +189,19 @@ const AdminMessages = () => {
                       Répondu
                     </span>
                   )}
+                  <Button size="sm" variant="ghost" onClick={() => setSelectedMessage(selectedMessage === message.id ? null : message.id)}>
+                    Répondre
+                  </Button>
                 </div>
+                {selectedMessage === message.id && (
+                  <div className="mt-4">
+                    <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)} rows={3} className="w-full border rounded px-3 py-2 mb-2" placeholder="Votre réponse..." />
+                    <div className="flex items-center gap-2">
+                      <input type="file" accept="image/*" onChange={handleReplyFile} />
+                      <Button size="sm" onClick={() => handleReply(message)}>Envoyer la réponse</Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

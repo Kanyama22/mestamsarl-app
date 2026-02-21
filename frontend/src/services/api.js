@@ -163,13 +163,31 @@ export const createOrder = async (orderData) => {
 // Contact Messages
 export const createContactMessage = async (messageData) => {
   try {
+    // If there is a file object, upload it to storage first
+    if (messageData.file instanceof File) {
+      try {
+        const filename = `contact-${Date.now()}-${messageData.file.name}`;
+        const bucket = 'contact-attachments';
+        const uploadRes = await supabase.storage.from(bucket).upload(filename, messageData.file, { cacheControl: '3600', upsert: false });
+        if (uploadRes.error) {
+          console.warn('Attachment upload failed:', uploadRes.error);
+        } else {
+          const publicRes = supabase.storage.from(bucket).getPublicUrl(uploadRes.data.path || filename);
+          const publicUrl = publicRes?.data?.publicUrl || publicRes?.publicURL || null;
+          if (publicUrl) messageData.attachment_url = publicUrl;
+        }
+      } catch (err) {
+        console.error('Failed to upload attachment:', err);
+      }
+    }
+
     // Essayer d'abord avec 'contact_messages'
     let { data, error } = await supabase
       .from('contact_messages')
       .insert([messageData])
       .select()
       .single();
-    
+
     // Si erreur, essayer avec 'contacts'
     if (error) {
       const result = await supabase
@@ -180,7 +198,7 @@ export const createContactMessage = async (messageData) => {
       data = result.data;
       error = result.error;
     }
-    
+
     if (error) throw error;
     return data;
   } catch (error) {

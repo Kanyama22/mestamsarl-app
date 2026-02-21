@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -12,42 +12,59 @@ import { companyInfo } from '../mock';
 const ContactAdmin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
-  const [subject, setSubject] = useState('');
+  const [file, setFile] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const messagesRef = useRef(null);
+
+  const loadMessages = async () => {
+    try {
+      const data = await getContactMessages();
+      setMessages(Array.isArray(data) ? data.reverse() : []);
+      // scroll to bottom
+      setTimeout(() => messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
+    } catch (err) {
+      console.error('Failed to load messages', err);
+    }
+  };
+
+  useEffect(() => {
+    loadMessages();
+    const id = setInterval(loadMessages, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleFileChange = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) setFile(f);
+  };
 
   const handleSend = async () => {
-    if (!subject.trim() || !message.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs",
-        variant: "destructive",
-        duration: 2000,
-      });
+    if (!message.trim()) {
+      toast({ title: 'Erreur', description: 'Le message est vide', variant: 'destructive' });
       return;
     }
 
     try {
-      await createContactMessage({
-        subject,
-        message,
-        status: 'new'
-      });
+      const payload = {
+        name: name || 'Client',
+        email: email || '',
+        message: message.trim(),
+        status: 'new',
+        created_at: new Date().toISOString(),
+      };
+      if (file) payload.file = file;
 
-      toast({
-        title: "Message envoyé ✓",
-        description: "Un admin vous répondra bientôt",
-        duration: 3000,
-      });
-
-      setSubject('');
+      await createContactMessage(payload);
+      toast({ title: 'Message envoyé', duration: 2000 });
       setMessage('');
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible d'envoyer le message",
-        variant: "destructive",
-        duration: 3000,
-      });
+      setFile(null);
+      loadMessages();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur", description: "Impossible d'envoyer le message", variant: "destructive" });
     }
   };
 
@@ -67,34 +84,24 @@ const ContactAdmin = () => {
         </div>
       </div>
 
-      {/* Chat rapide */}
-      <div className="px-4 mt-6">
-        <Card className="p-4 border border-gray-200">
-          <h3 className="font-semibold text-gray-900 mb-3">Envoyer un message</h3>
-          
-          <div className="space-y-3">
-            <Input
-              placeholder="Sujet"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="border-gray-300"
-            />
-            
-            <Textarea
-              placeholder="Votre message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={6}
-              className="border-gray-300 resize-none"
-            />
-            
-            <Button 
-              onClick={handleSend}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              <Send size={18} className="mr-2" />
-              Envoyer le message
-            </Button>
+      {/* Chat area */}
+      <div className="px-4 mt-6 pb-32">
+        <Card className="p-4 border border-gray-200 h-[60vh] overflow-y-auto">
+          <div className="space-y-4">
+            {messages.length === 0 && <p className="text-sm text-gray-500">Aucune conversation pour le moment</p>}
+            {messages.map((m) => (
+              <div key={m.id || m.created_at} className={`p-3 rounded-lg ${m.email ? 'bg-white' : 'bg-gray-50'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium text-gray-800">{m.name || m.email || 'Inconnu'}</div>
+                  <div className="text-xs text-gray-400">{new Date(m.created_at).toLocaleString('fr-FR')}</div>
+                </div>
+                <div className="text-gray-700 whitespace-pre-wrap mb-2">{m.message}</div>
+                {m.attachment_url && (
+                  <img src={m.attachment_url} alt="attachement" className="max-w-xs rounded-md" />
+                )}
+              </div>
+            ))}
+            <div ref={messagesRef} />
           </div>
         </Card>
       </div>

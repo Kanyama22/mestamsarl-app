@@ -14,7 +14,6 @@ const Contact = () => {
     name: '',
     email: '',
     phone: '',
-    subject: '',
     message: ''
   });
 
@@ -96,18 +95,7 @@ const Contact = () => {
                       placeholder="Votre téléphone"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="subject" className="text-base">Sujet *</Label>
-                    <Input
-                      id="subject"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                      className="mt-2"
-                      placeholder="Sujet de votre message"
-                    />
-                  </div>
+                  {/* Sujet supprimé — conversations rapides gérées dans Contacter l'admin */}
                   <div>
                     <Label htmlFor="message" className="text-base">Message *</Label>
                     <Textarea
