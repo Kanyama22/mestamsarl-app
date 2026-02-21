@@ -170,8 +170,9 @@ const Cart = () => {
                   <CardContent className="p-6">
                     <div className="flex flex-col sm:flex-row gap-6">
                       <img 
-                        src={item.image} 
+                        src={item.image || '/placeholder.svg'} 
                         alt={item.name}
+                        onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
                         className="w-full sm:w-32 h-32 object-cover rounded-lg"
                       />
                       <div className="flex-1">
@@ -200,7 +201,7 @@ const Cart = () => {
                                 +
                               </Button>
                             </div>
-                            <p className="text-2xl font-bold text-blue-600">${item.price * item.quantity}</p>
+                            <p className="text-2xl font-bold text-blue-600">${((item.price ?? item.price_usd ?? item.price_cdf ?? 0) * item.quantity).toFixed(2)}</p>
                           </div>
                           <Button 
                             variant="destructive" 

@@ -216,28 +216,28 @@ const ProductDetailMobile = () => {
                 <div className="mb-3">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <div className="font-semibold text-gray-900 text-sm">{review.name || review.user_name || 'Client'}</div>
+                      <div className="font-semibold text-gray-900 text-sm">{review.name || 'Client'}</div>
                       <div className="text-xs text-gray-500 mt-0.5">
-                        {new Date(review.created_at || review.date || Date.now()).toLocaleDateString('fr-FR', {
+                        {review.created_at ? new Date(review.created_at).toLocaleDateString('fr-FR', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'
-                        })}
+                        }) : 'Date inconnue'}
                       </div>
                     </div>
-                    {review.rating || review.stars ? (
+                    {review.rating > 0 && (
                       <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
                         <div className="flex items-center gap-0.5">
-                          {[...Array(Math.min(5, Math.round(review.rating || review.stars || 0)))].map((_, i) => (
+                          {[...Array(Math.min(5, Math.round(review.rating)))].map((_, i) => (
                             <Star key={i} size={12} className="text-yellow-400 fill-yellow-400" />
                           ))}
                         </div>
-                        <span className="text-xs font-bold text-gray-700 ml-1">{review.rating || review.stars || 0}</span>
+                        <span className="text-xs font-bold text-gray-700 ml-1">{review.rating}</span>
                       </div>
-                    ) : null}
+                    )}
                   </div>
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{review.comment || review.message || review.body}</p>
+                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{review.comment || '(Aucun commentaire)'}</p>
               </Card>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { TABLES, REVIEW_TABLE_PREFERENCES } from './tables';
 
 // Try common buckets when resolving storage paths
 const STORAGE_BUCKETS = ['images', 'public', 'uploads'];
@@ -27,7 +28,7 @@ async function resolveImageUrl(pathOrUrl) {
 export const getCategories = async () => {
   try {
     const { data, error } = await supabase
-      .from('categories')
+      .from(TABLES.CATEGORIES)
       .select('*')
       .order('created_at', { ascending: true });
     
@@ -47,7 +48,7 @@ export const getCategories = async () => {
 export const getCategoryById = async (id) => {
   try {
     const { data, error } = await supabase
-      .from('categories')
+      .from(TABLES.CATEGORIES)
       .select('*')
       .eq('id', id)
       .single();
@@ -67,7 +68,7 @@ export const getCategoryById = async (id) => {
 export const getProducts = async (filters = {}) => {
   try {
     let query = supabase
-      .from('products')
+      .from(TABLES.PRODUCTS)
       .select('*')
       .order('created_at', { ascending: false });
     
@@ -103,7 +104,7 @@ export const getProducts = async (filters = {}) => {
 export const getProductById = async (id) => {
   try {
     const { data, error } = await supabase
-      .from('products')
+      .from(TABLES.PRODUCTS)
       .select('*')
       .eq('id', id)
       .single();
@@ -123,7 +124,7 @@ export const getProductById = async (id) => {
 export const searchProducts = async (searchTerm) => {
   try {
     const { data, error } = await supabase
-      .from('products')
+      .from(TABLES.PRODUCTS)
       .select('*')
       .ilike('name', `%${searchTerm}%`)
       .order('created_at', { ascending: false });
@@ -145,20 +146,45 @@ export const searchProducts = async (searchTerm) => {
 
 // Get reviews for a product (try common table names)
 export const getProductReviews = async (productId) => {
-  const tables = ['product_reviews', 'reviews', 'comments', 'product_comments'];
+  // Use configured review table preferences and normalize returned rows
   try {
-    for (const t of tables) {
-      const { data, error } = await supabase
-        .from(t)
-        .select('*')
-        .eq('product_id', productId)
-        .order('created_at', { ascending: false });
-      if (!error && data && data.length) return data;
+    for (const t of REVIEW_TABLE_PREFERENCES) {
+      try {
+        const { data, error } = await supabase
+          .from(t)
+          .select('*')
+          .eq('product_id', productId)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          // table missing or other error — log and continue
+          console.debug(`getProductReviews: table '${t}' returned error:`, error.message || error);
+          continue;
+        }
+
+        if (!data) continue;
+
+        // Normalize rows to a consistent shape for UI
+        const normalized = (data || []).map((r) => ({
+          id: r.id,
+          name: r.customer_name || r.user_name || r.name || r.customer || 'Client anonyme',
+          email: r.customer_email || r.user_email || r.email || '',
+          rating: r.rating || r.stars || 0,
+          comment: r.comment || r.message || r.body || '',
+          created_at: r.created_at || r.date || null,
+          raw: r,
+        }));
+
+        return normalized;
+      } catch (innerErr) {
+        console.debug(`getProductReviews: exception when querying '${t}':`, innerErr?.message || innerErr);
+        continue;
+      }
     }
-    // fallback: no reviews in DB
+
     return [];
   } catch (err) {
-    console.error('Error fetching product reviews:', err);
+    console.error('Unexpected error fetching product reviews:', err);
     return [];
   }
 };
@@ -167,7 +193,7 @@ export const getProductReviews = async (productId) => {
 export const createOrder = async (orderData) => {
   try {
     const { data, error } = await supabase
-      .from('orders')
+      .from(TABLES.ORDERS)
       .insert([orderData])
       .select()
       .single();
@@ -183,7 +209,7 @@ export const createOrder = async (orderData) => {
 export const getOrderById = async (id) => {
   try {
     const { data, error } = await supabase
-      .from('orders')
+      .from(TABLES.ORDERS)
       .select('*')
       .eq('id', id)
       .single();
@@ -198,7 +224,7 @@ export const getOrderById = async (id) => {
 export const updateOrderStatus = async (id, status) => {
   try {
     const { data, error } = await supabase
-      .from('orders')
+      .from(TABLES.ORDERS)
       .update({ status })
       .eq('id', id)
       .select()
@@ -234,7 +260,7 @@ export const createContactMessage = async (messageData) => {
 
     // Essayer d'abord avec 'contact_messages'
     let { data, error } = await supabase
-      .from('contact_messages')
+      .from(TABLES.CONTACT_MESSAGES)
       .insert([messageData])
       .select()
       .single();
@@ -242,7 +268,7 @@ export const createContactMessage = async (messageData) => {
     // Si erreur, essayer avec 'contacts'
     if (error) {
       const result = await supabase
-        .from('contacts')
+        .from(TABLES.CONTACTS)
         .insert([messageData])
         .select()
         .single();
@@ -272,14 +298,14 @@ export const getContactMessages = async () => {
   try {
     // Essayer d'abord avec 'contact_messages'
     let { data, error } = await supabase
-      .from('contact_messages')
+      .from(TABLES.CONTACT_MESSAGES)
       .select('*')
       .order('created_at', { ascending: false });
     
     // Si erreur, essayer avec 'contacts'
     if (error) {
       const result = await supabase
-        .from('contacts')
+        .from(TABLES.CONTACTS)
         .select('*')
         .order('created_at', { ascending: false });
       data = result.data;
@@ -304,7 +330,7 @@ export const getContactMessages = async () => {
 export const updateMessageStatus = async (id, status) => {
   try {
     const { data, error } = await supabase
-      .from('contact_messages')
+      .from(TABLES.CONTACT_MESSAGES)
       .update({ status })
       .eq('id', id)
       .select()
@@ -321,33 +347,50 @@ export const updateMessageStatus = async (id, status) => {
 // Create/Post a product review
 export const createReview = async (reviewData) => {
   try {
-    const { data, error } = await supabase
-      .from('product_reviews')
-      .insert([{
+    const primary = TABLES.PRODUCT_REVIEWS_PRIMARY;
+
+    // Build payloads compatible with common schemas
+    const payloadFor = (table) => {
+      if (table === 'reviews') {
+        return {
+          product_id: reviewData.product_id,
+          customer_name: reviewData.user_name || reviewData.customer_name || 'Anonyme',
+          customer_email: reviewData.user_email || reviewData.customer_email || '',
+          rating: reviewData.rating || 5,
+          comment: reviewData.comment || ''
+        };
+      }
+      // fallback/older schema (product_reviews)
+      return {
         product_id: reviewData.product_id,
-        user_id: reviewData.user_id,
-        user_name: reviewData.user_name || 'Anonyme',
+        user_id: reviewData.user_id || null,
+        user_name: reviewData.user_name || reviewData.customer_name || 'Anonyme',
         rating: reviewData.rating || 5,
         comment: reviewData.comment || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      }])
+      };
+    };
+
+    // Try primary table first
+    let { data, error } = await supabase
+      .from(primary)
+      .insert([payloadFor(primary)])
       .select()
       .single();
-    
-    if (error) {
-      console.log('product_reviews table error, trying alternatives:', error.message);
-      // Try alternative table names
-      const result = await supabase
-        .from('reviews')
-        .insert([reviewData])
-        .select()
-        .single();
-      if (result.error) throw result.error;
-      return result.data;
-    }
-    
-    return data;
+
+    if (!error && data) return data;
+
+    // If primary failed, try fallback
+    const fallback = TABLES.PRODUCT_REVIEWS_FALLBACK;
+    const result = await supabase
+      .from(fallback)
+      .insert([payloadFor(fallback)])
+      .select()
+      .single();
+
+    if (result.error) throw result.error;
+    return result.data;
   } catch (error) {
     console.error('Error creating review:', error);
     // Save locally if Supabase fails
@@ -366,12 +409,22 @@ export const createReview = async (reviewData) => {
 // Update an existing review
 export const updateReview = async (reviewId, updates) => {
   try {
+    const table = TABLES.PRODUCT_REVIEWS_PRIMARY;
+    // Map common update keys to schema-specific columns
+    const mapped = { ...updates };
+    if (mapped.user_name) {
+      mapped.customer_name = mapped.user_name;
+      delete mapped.user_name;
+    }
+    if (mapped.user_email) {
+      mapped.customer_email = mapped.user_email;
+      delete mapped.user_email;
+    }
+    if (mapped.updated_at === undefined) mapped.updated_at = new Date().toISOString();
+
     const { data, error } = await supabase
-      .from('product_reviews')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
+      .from(table)
+      .update(mapped)
       .eq('id', reviewId)
       .select()
       .single();
@@ -388,7 +441,7 @@ export const updateReview = async (reviewId, updates) => {
 export const deleteReview = async (reviewId) => {
   try {
     const { error } = await supabase
-      .from('product_reviews')
+      .from(TABLES.PRODUCT_REVIEWS_PRIMARY)
       .delete()
       .eq('id', reviewId);
     

@@ -1,6 +1,7 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import MobileLayout from "./components/MobileLayout";
 import HomeMobile from "./pages/HomeMobile";
 import ShopMobile from "./pages/ShopMobile";
@@ -21,9 +22,10 @@ import AdminMessages from "./pages/admin/AdminMessages";
 
 function App() {
   return (
-    <AuthProvider>
-      <div className="App">
-        <BrowserRouter>
+    <ErrorBoundary>
+      <AuthProvider>
+        <div className="App">
+          <BrowserRouter>
           <Routes>
             {/* Mobile App Routes */}
             <Route path="/" element={<MobileLayout />}>
@@ -51,7 +53,8 @@ function App() {
           </Routes>
         </BrowserRouter>
       </div>
-    </AuthProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

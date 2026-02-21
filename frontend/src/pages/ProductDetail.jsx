@@ -307,30 +307,30 @@ const ProductDetail = () => {
                 <div key={r.id || idx} className="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h4 className="font-semibold text-gray-900 text-base">{r.name || r.user_name || 'Client anonyme'}</h4>
+                      <h4 className="font-semibold text-gray-900 text-base">{r.name || 'Client anonyme'}</h4>
                       <p className="text-sm text-gray-500 mt-1">
-                        {new Date(r.created_at || r.date || Date.now()).toLocaleDateString('fr-FR', {
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric'
-                        })}
+                        }) : 'Date inconnue'}
                       </p>
                     </div>
-                    {r.rating || r.stars ? (
+                    {r.rating > 0 && (
                       <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-lg">
                         <div className="flex items-center gap-0.5">
-                          {[...Array(Math.min(5, Math.round(r.rating || r.stars || 0)))].map((_, i) => (
+                          {[...Array(Math.min(5, Math.round(r.rating)))].map((_, i) => (
                             <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />
                           ))}
-                          {[...Array(5 - Math.round(r.rating || r.stars || 0))].map((_, i) => (
+                          {[...Array(5 - Math.round(r.rating))].map((_, i) => (
                             <Star key={`empty-${i}`} size={16} className="text-gray-300" />
                           ))}
                         </div>
-                        <span className="font-bold text-gray-700 ml-1">{r.rating || r.stars || 0}/5</span>
+                        <span className="font-bold text-gray-700 ml-1">{r.rating}/5</span>
                       </div>
-                    ) : null}
+                    )}
                   </div>
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{r.comment || r.message || r.body}</p>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{r.comment || '(Aucun commentaire)'}</p>
                 </div>
               ))}
             </div>

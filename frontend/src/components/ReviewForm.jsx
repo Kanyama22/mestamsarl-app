@@ -36,7 +36,8 @@ const ReviewForm = ({ productId, productName, onReviewSubmitted }) => {
       const reviewData = {
         product_id: productId,
         user_id: user?.id,
-        user_name: name || 'Anonyme',
+        customer_name: name || 'Anonyme',
+        customer_email: user?.email || '',
         rating: parseInt(rating),
         comment: comment.trim(),
       };
