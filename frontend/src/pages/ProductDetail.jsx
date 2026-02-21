@@ -4,8 +4,8 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { ShoppingCart, ArrowLeft, Package, Shield, Truck } from 'lucide-react';
-import { categories } from '../mock';
-import { getProductById } from '../services/api';
+import { categories, testimonials } from '../mock';
+import { getProductById, getProductReviews } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 
 const ProductDetail = () => {
@@ -19,9 +19,23 @@ const ProductDetail = () => {
     const load = async () => {
       const p = await getProductById(id);
       setProduct(p);
+      const revs = await getProductReviews(id);
+      setReviews(revs && revs.length ? revs : (testimonials || []));
     };
     load();
   }, [id]);
+
+  const [reviews, setReviews] = useState([]);
+
+  const parseSpecifications = (specs) => {
+    if (!specs) return null;
+    if (typeof specs === 'object') return specs;
+    try {
+      return JSON.parse(specs);
+    } catch (e) {
+      return null;
+    }
+  };
 
   if (!product) {
     return (
@@ -112,16 +126,16 @@ const ProductDetail = () => {
             </div>
 
             {/* Specifications */}
-            {product.specifications && (
+            {parseSpecifications(product.specifications) && (
               <div className="mb-8">
                 <h3 className="text-xl font-semibold mb-4 text-gray-900">Spécifications</h3>
                 <Card>
                   <CardContent className="p-6">
                     <div className="grid grid-cols-1 gap-3">
-                      {Object.entries(product.specifications).map(([key, value]) => (
+                      {Object.entries(parseSpecifications(product.specifications)).map(([key, value]) => (
                         <div key={key} className="flex justify-between border-b border-gray-100 pb-3 last:border-0">
                           <span className="text-gray-600 capitalize">{key}:</span>
-                          <span className="font-semibold text-gray-900">{value}</span>
+                          <span className="font-semibold text-gray-900">{String(value)}</span>
                         </div>
                       ))}
                     </div>
@@ -227,6 +241,26 @@ const ProductDetail = () => {
             </div>
           </div>
         )}
+
+        {/* Reviews */}
+        <div className="mt-16">
+          <h2 className="text-3xl font-bold mb-4 text-gray-900">Avis & commentaires</h2>
+          {reviews.length === 0 && <p className="text-gray-600">Aucun avis pour ce produit.</p>}
+          <div className="space-y-4">
+            {reviews.map((r, idx) => (
+              <Card key={r.id || idx} className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-semibold">{r.name || r.user_name || 'Anonyme'}</div>
+                    <div className="text-sm text-gray-500">{new Date(r.created_at || r.date || Date.now()).toLocaleDateString('fr-FR')}</div>
+                  </div>
+                  <div className="text-yellow-500 font-bold">{r.rating ?? r.stars ?? ''}</div>
+                </div>
+                <div className="mt-3 text-gray-700 whitespace-pre-wrap">{r.comment || r.message || r.body}</div>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

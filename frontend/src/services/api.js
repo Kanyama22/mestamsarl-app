@@ -143,6 +143,26 @@ export const searchProducts = async (searchTerm) => {
   }
 };
 
+// Get reviews for a product (try common table names)
+export const getProductReviews = async (productId) => {
+  const tables = ['product_reviews', 'reviews', 'comments', 'product_comments'];
+  try {
+    for (const t of tables) {
+      const { data, error } = await supabase
+        .from(t)
+        .select('*')
+        .eq('product_id', productId)
+        .order('created_at', { ascending: false });
+      if (!error && data && data.length) return data;
+    }
+    // fallback: no reviews in DB
+    return [];
+  } catch (err) {
+    console.error('Error fetching product reviews:', err);
+    return [];
+  }
+};
+
 // Orders
 export const createOrder = async (orderData) => {
   try {
