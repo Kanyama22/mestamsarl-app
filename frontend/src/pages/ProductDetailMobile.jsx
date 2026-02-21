@@ -7,6 +7,7 @@ import { ArrowLeft, Heart, Share2, ShoppingCart, Star } from 'lucide-react';
 import { getProductById, createOrder, getProductReviews } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import { testimonials } from '../mock';
+import ReviewForm from '../components/ReviewForm';
 
 const ProductDetailMobile = () => {
   const { id } = useParams();
@@ -102,6 +103,11 @@ const ProductDetailMobile = () => {
     });
   };
 
+  const handleReviewSubmitted = (newReview) => {
+    // Add new review to the top of the list
+    setReviews([newReview, ...reviews]);
+  };
+
   return (
     <div className="pb-32 bg-gray-50">
       {/* Header avec image */}
@@ -188,6 +194,17 @@ const ProductDetailMobile = () => {
       {/* Section Avis & commentaires */}
       <div className="px-4 mb-4">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Avis et commentaires</h2>
+        
+        {/* Review Form */}
+        <div className="mb-6 pb-6 border-b border-gray-100">
+          <ReviewForm 
+            productId={product.id} 
+            productName={product.name}
+            onReviewSubmitted={handleReviewSubmitted}
+          />
+        </div>
+
+        {/* Reviews List */}
         {reviews.length === 0 ? (
           <div className="text-center py-8 bg-white rounded-2xl">
             <p className="text-gray-500 text-sm">Aucun avis pour ce produit pour le moment.</p>

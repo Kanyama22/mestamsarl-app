@@ -8,6 +8,7 @@ import { categories, testimonials } from '../mock';
 import { getProductById, getProductReviews } from '../services/api';
 import { createOrder } from '../services/api';
 import { useToast } from '../hooks/use-toast';
+import ReviewForm from '../components/ReviewForm';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -105,6 +106,11 @@ const ProductDetail = () => {
       console.error('Buy now error', err);
       toast({ title: 'Erreur', description: 'Impossible de créer la commande', variant: 'destructive' });
     }
+  };
+
+  const handleReviewSubmitted = (newReview) => {
+    // Add new review to the list
+    setReviews([newReview, ...reviews]);
   };
 
   return (
@@ -282,6 +288,17 @@ const ProductDetail = () => {
         {/* Reviews */}
         <div className="mt-16 bg-white rounded-2xl p-8 shadow-sm">
           <h2 className="text-3xl font-bold mb-8 text-gray-900">Avis et commentaires</h2>
+          
+          {/* Review Form */}
+          <div className="mb-12 pb-12 border-b border-gray-100">
+            <ReviewForm 
+              productId={product.id} 
+              productName={product.name}
+              onReviewSubmitted={handleReviewSubmitted}
+            />
+          </div>
+
+          {/* Reviews List */}
           {reviews.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">Aucun avis pour ce produit pour le moment.</p>

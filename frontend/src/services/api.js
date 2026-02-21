@@ -317,3 +317,85 @@ export const updateMessageStatus = async (id, status) => {
     throw error;
   }
 };
+
+// Create/Post a product review
+export const createReview = async (reviewData) => {
+  try {
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .insert([{
+        product_id: reviewData.product_id,
+        user_id: reviewData.user_id,
+        user_name: reviewData.user_name || 'Anonyme',
+        rating: reviewData.rating || 5,
+        comment: reviewData.comment || '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }])
+      .select()
+      .single();
+    
+    if (error) {
+      console.log('product_reviews table error, trying alternatives:', error.message);
+      // Try alternative table names
+      const result = await supabase
+        .from('reviews')
+        .insert([reviewData])
+        .select()
+        .single();
+      if (result.error) throw result.error;
+      return result.data;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error creating review:', error);
+    // Save locally if Supabase fails
+    const localReviews = JSON.parse(localStorage.getItem('pending_reviews') || '[]');
+    const newReview = {
+      id: Date.now().toString(),
+      ...reviewData,
+      created_at: new Date().toISOString()
+    };
+    localReviews.push(newReview);
+    localStorage.setItem('pending_reviews', JSON.stringify(localReviews));
+    return newReview;
+  }
+};
+
+// Update an existing review
+export const updateReview = async (reviewId, updates) => {
+  try {
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', reviewId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating review:', error);
+    throw error;
+  }
+};
+
+// Delete a review
+export const deleteReview = async (reviewId) => {
+  try {
+    const { error } = await supabase
+      .from('product_reviews')
+      .delete()
+      .eq('id', reviewId);
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    throw error;
+  }
+};
